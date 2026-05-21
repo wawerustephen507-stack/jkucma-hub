@@ -22,12 +22,13 @@ const PaymentStatus = ({ status, profile }) => {
 
     setLoading(true);
     try {
-      // 🏥 Hardcoded the direct production URL endpoint to completely bypass any VITE variable caching bugs
+      // 🏥 Target the explicit cloud endpoint directly
       const response = await fetch("https://ijqvkeqgfpfeeyprhqwe.supabase.co/functions/v1/mpesa-stk-push", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+          // 🏥 Hardcoded the valid publishable token here to prevent 401 environmental cache drops on Vercel
+          'Authorization': `Bearer sb_publishable_0TelValcna-Yjii8wL76YA_X-zJfW4u6S` 
         },
         body: JSON.stringify({
           phone: cleanPhone,
