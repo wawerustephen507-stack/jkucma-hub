@@ -22,7 +22,8 @@ const PaymentStatus = ({ status, profile }) => {
 
     setLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mpesa-stk-push`, {
+      // 🏥 Hardcoded the direct production URL endpoint to completely bypass any VITE variable caching bugs
+      const response = await fetch("https://ijqvkeqgfpfeeyprhqwe.supabase.co/functions/v1/mpesa-stk-push", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
