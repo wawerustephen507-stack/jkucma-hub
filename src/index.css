@@ -1,0 +1,12 @@
+@import "tailwindcss";
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+}
+
+/* Custom scrollbar for that clean mobile feel */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
