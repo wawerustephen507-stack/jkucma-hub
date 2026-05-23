@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS', // 🏥 Clear browser handshake blocks
 }
 
 serve(async (req) => {
@@ -13,11 +14,13 @@ serve(async (req) => {
     const bodyText = await req.text();
     const { phone, amount } = JSON.parse(bodyText);
     
-    // 🏥 SECRETS: Clean them up to remove accidental spaces
+    // 🏥 SECRETS: Pulled directly from your Supabase Environment Configuration
     const consumerKey = Deno.env.get('DARAJA_CONSUMER_KEY')?.trim()
     const consumerSecret = Deno.env.get('DARAJA_CONSUMER_SECRET')?.trim()
     const passkey = Deno.env.get('DARAJA_PASSKEY')?.trim()
-    const shortcode = "174379" 
+    
+    // 🏥 FIX: Dynamically fetching your custom shortcode out of your Dashboard Secrets list
+    const shortcode = Deno.env.get('DARAJA_SHORTCODE')?.trim() || "174379"
 
     // 🏥 2. GET ACCESS TOKEN
     const auth = btoa(`${consumerKey}:${consumerSecret}`)
