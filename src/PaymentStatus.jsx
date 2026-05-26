@@ -8,6 +8,36 @@ const PaymentStatus = ({ status, profile }) => {
   const [txCode, setTxCode] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
+  // 📡 REALTIME PROTOCOL: Automatically unlocks the view when row status changes to 'Success'
+  React.useEffect(() => {
+    let userId = profile?.id;
+    if (!userId) return;
+
+    const paymentSubscription = supabase
+      .channel('payment-status-channel')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'payments',
+          filter: `user_id=eq.${userId}`
+        },
+        (payload) => {
+          console.log('Payment status update detected:', payload.new);
+          if (payload.new.status === 'Success') {
+            alert("✓ Access Protocol Granted! Welcome to the JKUCMA Hub.");
+            window.location.reload();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(paymentSubscription);
+    };
+  }, [profile?.id]);
+
   // --- 🏥 FUNCTION 1: AUTOMATIC STK PUSH ---
   const handlePayment = async (e) => {
     e.preventDefault();
@@ -22,7 +52,6 @@ const PaymentStatus = ({ status, profile }) => {
 
     setLoading(true);
 
-    // 🏥 SAFETY GUARD: Extract the active student session identifier string directly
     let userId = profile?.id;
     if (!userId) {
       const { data: { user } } = await supabase.auth.getUser();
@@ -30,7 +59,6 @@ const PaymentStatus = ({ status, profile }) => {
     }
 
     try {
-      // Target the explicit cloud endpoint directly
       const response = await fetch("https://ijqvkeqgfpfeeyprhqwe.supabase.co/functions/v1/mpesa-stk-push", {
         method: 'POST',
         headers: {
@@ -40,7 +68,7 @@ const PaymentStatus = ({ status, profile }) => {
         body: JSON.stringify({
           phone: cleanPhone,
           amount: 200,
-          userId: userId || null, // 🏥 FIXED: Explicitly passes the user context session variable to the database tracker!
+          userId: userId || null, 
           accountRef: `JKUCMA-${profile?.full_name?.split(' ')[0]?.toUpperCase() || 'MEMBER'}`
         })
       });
@@ -49,14 +77,16 @@ const PaymentStatus = ({ status, profile }) => {
 
       if (response.ok && (data.ResponseCode === "0" || data.ResponseCode === 0)) {
         alert("🚀 HUB PROTOCOL: Prompt Sent! Enter your M-Pesa PIN now.");
+        // 🏥 FIXED: State resets only execute upon explicit successful confirmation tracking resolutions
+        setLoading(false);
+        setPhone("");
       } else {
         alert(`Safaricom Error: ${data.CustomerMessage || "Check Daraja Keys."}`);
+        setLoading(false);
       }
     } catch (err) {
       alert("Network Error: Could not reach the JKUCMA Payment Gateway.");
-    } finally {
       setLoading(false);
-      setPhone("");
     }
   };
 
