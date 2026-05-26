@@ -54,8 +54,9 @@ const PaymentStatus = ({ status, profile }) => {
       }
     } catch (err) {
       alert("Network Error: Could not reach the JKUCMA Payment Gateway.");
-    } resolve: {
+    } finally {
       setLoading(false);
+      setPhone("");
     }
   };
 
