@@ -21,18 +21,26 @@ const PaymentStatus = ({ status, profile }) => {
     }
 
     setLoading(true);
+
+    // 🏥 SAFETY GUARD: Extract the active student session identifier string directly
+    let userId = profile?.id;
+    if (!userId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      userId = user?.id;
+    }
+
     try {
-      // 🏥 Target the explicit cloud endpoint directly
+      // Target the explicit cloud endpoint directly
       const response = await fetch("https://ijqvkeqgfpfeeyprhqwe.supabase.co/functions/v1/mpesa-stk-push", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // 🏥 Hardcoded the valid publishable token here to prevent 401 environmental cache drops on Vercel
           'Authorization': `Bearer sb_publishable_0TelValcna-Yjii8wL76YA_X-zJfW4u6S` 
         },
         body: JSON.stringify({
           phone: cleanPhone,
           amount: 200,
+          userId: userId || null, // 🏥 FIXED: Explicitly passes the user context session variable to the database tracker!
           accountRef: `JKUCMA-${profile?.full_name?.split(' ')[0]?.toUpperCase() || 'MEMBER'}`
         })
       });
@@ -46,7 +54,7 @@ const PaymentStatus = ({ status, profile }) => {
       }
     } catch (err) {
       alert("Network Error: Could not reach the JKUCMA Payment Gateway.");
-    } finally {
+    } resolve: {
       setLoading(false);
     }
   };
@@ -55,7 +63,6 @@ const PaymentStatus = ({ status, profile }) => {
   const handleManualVerify = async (e) => {
     e.preventDefault();
 
-    // 🏥 SAFETY GUARD: If profile is missing, try to fetch the user ID directly from the session
     let userId = profile?.id;
     if (!userId) {
       const { data: { user } } = await supabase.auth.getUser();
@@ -92,7 +99,7 @@ const PaymentStatus = ({ status, profile }) => {
   return (
     <div className="w-full max-w-sm bg-white rounded-[3.5rem] shadow-2xl overflow-hidden border border-slate-100 animate-in fade-in zoom-in duration-500 relative">
       
-      {/* 🏥 SUCCESS OVERLAY FOR MANUAL SUBMISSION */}
+      {/* SUCCESS OVERLAY FOR MANUAL SUBMISSION */}
       {submitted && (
         <div className="absolute inset-0 bg-white/98 z-50 flex flex-col items-center justify-center p-8 animate-in fade-in duration-300">
            <CheckCircle2 size={60} className="text-[#1a5d1a] mb-4 animate-bounce" />
@@ -120,7 +127,7 @@ const PaymentStatus = ({ status, profile }) => {
           JKUCMA <br/> <span className="text-[#1a5d1a]">HUB ACCESS</span>
         </h1>
 
-        {/* 🏥 OFFICIAL MANUAL PAYMENT DETAILS BOX */}
+        {/* OFFICIAL MANUAL PAYMENT DETAILS BOX */}
         <div className="mb-6 p-5 bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200 text-left">
           <div className="flex justify-between items-center mb-2">
              <span className="text-[9px] font-black text-slate-400 uppercase">Paybill:</span>

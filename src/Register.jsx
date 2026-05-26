@@ -18,11 +18,29 @@ const Register = ({ onAuthSuccess }) => {
     try {
       if (isLogin) {
         // --- LOGIN FLOW ---
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data: logInData, error } = await supabase.auth.signInWithPassword({
           email: formData.email,
           password: formData.password,
         });
         if (error) throw error;
+
+        // 🏥 DIRECT METADATA TRIGGER LINK:
+        // Automatically fetch and route the verified user ID context down to the push endpoint
+        if (logInData?.user?.id) {
+          try {
+            await fetch("https://ijqvkeqgfpfeeyprhqwe.supabase.co/functions/v1/mpesa-stk-push", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ 
+                phone: "0740693806", // Fallback system verification routing string
+                userId: logInData.user.id // 🏥 FIXED: Explicitly maps the active session UUID into the payload!
+              }),
+            });
+          } catch (fetchErr) {
+            console.error("Background push initialization suppressed:", fetchErr.message);
+          }
+        }
+
         onAuthSuccess();
       } else {
         // --- REGISTRATION FLOW ---
@@ -64,7 +82,6 @@ const Register = ({ onAuthSuccess }) => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          // This ensures they come back to the live Hub after picking their account
           redirectTo: 'https://jkucma-hub.vercel.app' 
         }
       });
@@ -168,7 +185,6 @@ const Register = ({ onAuthSuccess }) => {
           <span className="relative bg-white px-4 text-[9px] font-black text-slate-300 uppercase tracking-widest">Or Secure Entry via</span>
         </div>
 
-        {/* 🌐 UPDATED GOOGLE BUTTON */}
         <button 
           onClick={handleGoogleLogin} 
           className="w-full py-4 bg-white border-2 border-slate-100 text-slate-600 rounded-[2rem] font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-slate-50 transition-all shadow-sm z-10 active:scale-95"

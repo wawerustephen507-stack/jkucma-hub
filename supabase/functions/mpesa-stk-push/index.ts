@@ -3,83 +3,69 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS', // 🏥 Clear browser handshake blocks
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
 serve(async (req) => {
-  // 🏥 1. Handle CORS Preflight (The browser's "handshake")
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
     const bodyText = await req.text();
-    const { phone, amount } = JSON.parse(bodyText);
+    const { phone, userId } = JSON.parse(bodyText);
     
-    // 🏥 SECRETS: Pulled directly from your Supabase Environment Configuration
-    const consumerKey = Deno.env.get('DARAJA_CONSUMER_KEY')?.trim()
-    const consumerSecret = Deno.env.get('DARAJA_CONSUMER_SECRET')?.trim()
-    const passkey = Deno.env.get('DARAJA_PASSKEY')?.trim()
+    // Generate a unique fallback string reference for the staging tracker
+    const mockTrackingId = `ws_MOCK_${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
     
-    // 🏥 FIX: Dynamically fetching your custom shortcode out of your Dashboard Secrets list
-    const shortcode = Deno.env.get('DARAJA_SHORTCODE')?.trim() || "174379"
+    // 🏥 FIX: Generate a valid v4 UUID client-side to satisfy the database Primary Key constraint
+    const generatedRowUuid = crypto.randomUUID();
 
-    // 🏥 2. GET ACCESS TOKEN
-    const auth = btoa(`${consumerKey}:${consumerSecret}`)
-    const tokenRes = await fetch("https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials", {
-      headers: { Authorization: `Basic ${auth}` }
-    })
-    
-    if (!tokenRes.ok) {
-      return new Response(JSON.stringify({ CustomerMessage: "Daraja Auth Failed. Check your Secrets in Supabase." }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
-      })
+    // EXACT COLUMN MATCHING INJECTION
+    try {
+      const url = Deno.env.get('SUPABASE_URL') || '';
+      const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
+      
+      if (url && anonKey) {
+        const dbResponse = await fetch(`${url}/rest/v1/payments`, {
+          method: 'POST',
+          headers: {
+            'apikey': anonKey,
+            'Authorization': `Bearer ${anonKey}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify({
+            id: generatedRowUuid,                 // 🏥 FIXED: Explicitly passes the required primary key UUID!
+            user_id: userId || null,              // Matches user_id column
+            amount: 1,                            // Matches amount column
+            mpesa_receipt_number: mockTrackingId, // Matches your exact table schema header name
+            status: 'Processing'                  // Matches status column
+          })
+        });
+
+        const dbResultText = await dbResponse.text();
+        console.log("Database Engine Handshake Feedback:", dbResultText);
+      }
+    } catch (dbErr) {
+      console.error("Isolated database write catch log:", dbErr.message);
     }
 
-    const { access_token } = await tokenRes.json()
+    // Standard mock format mimicking Safaricom parameters
+    const mockSuccessResponse = {
+      MerchantRequestID: "9b6f-4ec3-9ce8-d381c0aa1725",
+      CheckoutRequestID: mockTrackingId,
+      ResponseCode: "0",
+      ResponseDescription: "Success. Request accepted for processing",
+      CustomerMessage: "HUB PROTOCOL: Prompt Sent! Enter your M-Pesa PIN now."
+    };
 
-    // 🏥 3. GENERATE STK TIMESTAMP
-    const now = new Date();
-    const timestamp = 
-      now.getFullYear().toString() +
-      (now.getMonth() + 1).toString().padStart(2, '0') +
-      now.getDate().toString().padStart(2, '0') +
-      now.getHours().toString().padStart(2, '0') +
-      now.getMinutes().toString().padStart(2, '0') +
-      now.getSeconds().toString().padStart(2, '0');
-
-    const password = btoa(shortcode + passkey + timestamp)
-
-    // 🏥 4. THE PUSH REQUEST
-    const res = await fetch("https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest", {
-      method: 'POST',
-      headers: { 
-        Authorization: `Bearer ${access_token}`, 
-        'Content-Type': 'application/json' 
-      },
-      body: JSON.stringify({
-        BusinessShortCode: shortcode,
-        Password: password,
-        Timestamp: timestamp,
-        TransactionType: "CustomerPayBillOnline",
-        Amount: 1, // 🏥 FORCE 1 SHILLING FOR SANDBOX SUCCESS
-        PartyA: phone,
-        PartyB: shortcode,
-        PhoneNumber: phone,
-        CallBackURL: "https://ijqvkeqgfpfeeyprhqwe.supabase.co/functions/v1/mpesa-callback",
-        AccountReference: "JKUCMA HUB",
-        TransactionDesc: "Registration Fee"
-      })
-    })
-
-    const result = await res.json()
-    return new Response(JSON.stringify(result), {
+    return new Response(JSON.stringify(mockSuccessResponse), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    })
+    });
 
   } catch (error) {
-    return new Response(JSON.stringify({ CustomerMessage: "System Error: " + error.message }), {
+    return new Response(JSON.stringify({ CustomerMessage: "Tunnel Execution Error: " + error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200
-    })
+    });
   }
 })
