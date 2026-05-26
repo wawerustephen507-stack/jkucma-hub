@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // 🏥 FIXED: Explicitly destructured useEffect from React core
 import { CreditCard, AlertCircle, Loader2, Smartphone, CheckCircle2, ShieldCheck, Send, RefreshCw } from 'lucide-react';
 import { supabase } from './lib/supabaseClient';
 
@@ -9,7 +9,7 @@ const PaymentStatus = ({ status, profile }) => {
   const [submitted, setSubmitted] = useState(false);
 
   // 📡 REALTIME PROTOCOL: Automatically unlocks the view when row status changes to 'Success'
-  React.useEffect(() => {
+  useEffect(() => { // 🏥 FIXED: Cleaned up namespace reference directly
     let userId = profile?.id;
     if (!userId) return;
 
@@ -77,7 +77,6 @@ const PaymentStatus = ({ status, profile }) => {
 
       if (response.ok && (data.ResponseCode === "0" || data.ResponseCode === 0)) {
         alert("🚀 HUB PROTOCOL: Prompt Sent! Enter your M-Pesa PIN now.");
-        // 🏥 FIXED: State resets only execute upon explicit successful confirmation tracking resolutions
         setLoading(false);
         setPhone("");
       } else {
