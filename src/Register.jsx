@@ -13,7 +13,7 @@ const Register = ({ onAuthSuccess }) => {
 
   const handleAuth = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    loading(true);
 
     try {
       if (isLogin) {
@@ -72,6 +72,28 @@ const Register = ({ onAuthSuccess }) => {
       }
     } catch (error) {
       alert(error.message);
+      setLoading(false);
+    }
+  };
+
+  // 🏥 NEW FUNCTION: FORGOT PASSWORD FLOW TRIGGER
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    if (!formData.email) {
+      alert("Please enter your email address first.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      alert("RESET LINK SENT! Check your email inbox (and spam folder) to safely establish a new password protocol.");
+    } catch (error) {
+      alert("Recovery Route Issue: " + error.message);
+    } finally {
       setLoading(false);
     }
   };
@@ -171,6 +193,19 @@ const Register = ({ onAuthSuccess }) => {
             className="w-full p-5 bg-slate-50 rounded-[1.5rem] border-none text-sm font-bold outline-none" 
             value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} required 
           />
+
+          {/* 🏥 FORGOT PASSWORD LINK TRIGGER (Only visible on Sign-In View state) */}
+          {isLogin && (
+            <div className="text-right px-2 mt-1 mb-2 animate-in fade-in duration-300">
+              <button 
+                type="button" 
+                onClick={handleForgotPassword}
+                className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 transition-colors"
+              >
+                Forgot Password?
+              </button>
+            </div>
+          )}
 
           <button 
             type="submit" disabled={loading} 
