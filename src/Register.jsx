@@ -13,7 +13,7 @@ const Register = ({ onAuthSuccess }) => {
 
   const handleAuth = async (e) => {
     e.preventDefault();
-    loading(true);
+    setLoading(true); // 🏥 FIXED: Changed loading(true) to setLoading(true) to prevent execution crash
 
     try {
       if (isLogin) {
