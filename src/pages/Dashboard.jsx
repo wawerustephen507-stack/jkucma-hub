@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import EventsFeed from '../components/EventsFeed';
@@ -9,8 +10,7 @@ import AdvertCarousel from '../components/AdvertCarousel';
 import LibraryPouch from '../components/LibraryPouch';
 import { 
   BookOpen, Bell, Users, Home, ChevronRight, Camera, X, LogOut, BadgeCheck,
-  FileText, ShieldCheck, Calendar, Award, CreditCard, ArrowRight, KeyRound,
-  Instagram, Facebook, Twitter, Youtube, Copyright, Globe
+  FileText, ShieldCheck, Instagram, Facebook, Twitter, Youtube, Globe
 } from 'lucide-react';
 
 const Dashboard = ({ user, profile }) => {
@@ -20,7 +20,6 @@ const Dashboard = ({ user, profile }) => {
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [officialLinks, setOfficialLinks] = useState([]); 
 
-  // 🏥 STATES: For Sliding Adverts & Slide-up Library Pouch
   const [isLibraryPouchOpen, setIsLibraryPouchOpen] = useState(false);
   const [adverts, setAdverts] = useState([]);
   const [libraryResources, setLibraryResources] = useState([]);
@@ -57,7 +56,6 @@ const Dashboard = ({ user, profile }) => {
         
         if (linksData) setOfficialLinks(linksData);
 
-        // 🏥 FETCH ADVERTS
         const { data: adData } = await supabase
           .from('adverts')
           .select('*')
@@ -66,7 +64,6 @@ const Dashboard = ({ user, profile }) => {
 
         if (adData && adData.length > 0) setAdverts(adData);
 
-        // 🏥 FETCH CLINICAL LIBRARY ASSETS
         const { data: libData } = await supabase
           .from('clinical_library')
           .select('*')
@@ -97,7 +94,9 @@ const Dashboard = ({ user, profile }) => {
       
       setProfileImage(publicUrl);
       alert("Hub Identity Photo Updated!");
-    } catch (error) { alert("Error: " + error.message); }
+    } catch (error) { 
+      alert("Error: " + error.message); 
+    }
   };
 
   const getHeaderTitle = () => {
@@ -140,7 +139,7 @@ const Dashboard = ({ user, profile }) => {
   return (
     <div className="flex min-h-screen bg-slate-50 font-sans text-slate-900">
       
-      {/* 1. DESKTOP SIDEBAR */}
+      {/* DESKTOP SIDEBAR */}
       <aside className="hidden lg:flex w-64 flex-col bg-[#003366] text-white p-6 shadow-xl fixed h-full z-40">
         <div className="flex items-center gap-3 mb-10">
           <div className="w-10 h-10 bg-white rounded-full overflow-hidden flex items-center justify-center border-2 border-white/20 shadow-lg p-1">
@@ -169,7 +168,7 @@ const Dashboard = ({ user, profile }) => {
         </div>
       </aside>
 
-      {/* 2. MOBILE TOP BAR */}
+      {/* MOBILE TOP BAR */}
       <div className="lg:hidden fixed top-0 w-full bg-[#003366] text-white px-4 py-3 flex justify-between items-center z-50 shadow-md">
         <div className="flex items-center gap-2">
           <img src="/jkucma-logo.png" className="w-8 h-8 rounded-full bg-white p-0.5" alt="Logo" />
@@ -178,7 +177,7 @@ const Dashboard = ({ user, profile }) => {
         <LogOut size={18} onClick={handleSignOut} className="text-red-300 opacity-70 cursor-pointer" />
       </div>
 
-      {/* 3. MAIN CONTENT AREA */}
+      {/* MAIN CONTENT */}
       <main className="flex-1 lg:ml-64 flex flex-col min-h-screen pt-14 lg:pt-0 pb-32 lg:pb-0">
         <header className="bg-white lg:bg-transparent p-4 lg:p-8 flex justify-between items-center relative z-40">
           <div className="max-w-[65%]">
@@ -195,7 +194,7 @@ const Dashboard = ({ user, profile }) => {
             </div>
             
             <div onClick={() => setShowProfile(!showProfile)} className="w-9 h-9 lg:w-12 lg:h-12 rounded-2xl bg-[#1a5d1a] flex items-center justify-center text-white font-black shadow-lg cursor-pointer border-2 border-white overflow-hidden active:scale-95 transition-transform">
-              {(profile?.avatar_url || profileImage) ? <img src={profile?.avatar_url || profileImage} className="w-full h-full object-cover" alt="Profile" /> : profile?.full_name?.charAt(0) || 'M'}
+              {(profile?.avatar_url || profileImage) ? <img src={profile?.avatar_url || profileImage} className="w-full h-full object-cover" alt="Avatar" /> : (profile?.full_name?.charAt(0) || 'M')}
             </div>
 
             {showProfile && (
@@ -231,7 +230,7 @@ const Dashboard = ({ user, profile }) => {
         <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6 flex-1 w-full pb-10">
           {activeTab === 'home' ? (
             <>
-              {/* LIVE ANNOUNCEMENT & EVENT SECTION */}
+              {/* LIVE ANNOUNCEMENT & EVENT */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-gradient-to-br from-blue-600 to-blue-800 p-6 lg:p-8 rounded-[1.5rem] lg:rounded-[2.5rem] text-white shadow-xl relative overflow-hidden">
                   <div className="relative z-10">
@@ -264,10 +263,10 @@ const Dashboard = ({ user, profile }) => {
                 </div>
               </div>
 
-              {/* 📢 AUTO-SLIDING ADVERT CAROUSEL */}
+              {/* AUTO-SLIDING ADVERT CAROUSEL */}
               <AdvertCarousel adverts={adverts} />
 
-              {/* GATEWAY ACCESS 2X2 / 4X1 GRID */}
+              {/* GATEWAY ACCESS */}
               <section>
                 <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-2">Gateway Access</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -278,7 +277,7 @@ const Dashboard = ({ user, profile }) => {
                 </div>
               </section>
 
-              {/* STATS & EVENTS OVERVIEW */}
+              {/* STATS & EVENTS */}
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 pb-8">
                 <div className="xl:col-span-2 space-y-6">
                   <EventsFeed />
@@ -305,7 +304,7 @@ const Dashboard = ({ user, profile }) => {
           )}
         </div>
 
-        {/* 🛡️ THE BLUE SOCIAL STAFF */}
+        {/* SOCIAL LINKS BAR */}
         <div className="w-full bg-[#002244] py-4 px-6 flex justify-center items-center gap-6 lg:gap-10 shadow-inner mt-auto">
           <SocialIcon icon={<Instagram size={20} className="text-white/70 hover:text-white" />} link="https://instagram.com/jkucma" />
           <SocialIcon icon={<Facebook size={20} className="text-white/70 hover:text-white" />} link="https://facebook.com/jkucma" />
@@ -314,7 +313,7 @@ const Dashboard = ({ user, profile }) => {
           <SocialIcon icon={<Globe size={20} className="text-white/70 hover:text-white" />} link="https://jkucma.vercel.app" />
         </div>
 
-        {/* 🛡️ PRODUCTION FOOTER */}
+        {/* FOOTER */}
         <footer className="bg-white p-10 border-t border-slate-100 text-center mb-2 lg:mb-0">
           <div className="max-w-7xl mx-auto flex flex-col items-center gap-2">
             <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">© 2026 JKUCMA Association</p>
@@ -329,20 +328,20 @@ const Dashboard = ({ user, profile }) => {
         </footer>
       </main>
 
-      {/* 4. MOBILE BOTTOM NAVIGATION */}
+      {/* MOBILE BOTTOM NAVIGATION */}
       <nav className="lg:hidden fixed bottom-0 w-full bg-white/95 backdrop-blur-md border-t border-slate-100 flex justify-around items-center py-4 z-50 shadow-[0_-5px_20px_rgba(0,0,0,0.06)] px-2">
         <MobileTabItem icon={<Home size={20} />} active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
         <MobileTabItem icon={<BookOpen size={20} />} active={isLibraryPouchOpen} onClick={() => setIsLibraryPouchOpen(true)} />
         
         {profile?.role === 'Admin' && (
-          <MobileTabItem icon={<ShieldCheck size={22} className="text-green-600" onClick={() => setIsAdminModalOpen(true)} />} />
+          <MobileTabItem icon={<ShieldCheck size={22} className="text-green-600" />} onClick={() => setIsAdminModalOpen(true)} />
         )}
 
         <MobileTabItem icon={<Bell size={20} />} active={activeTab === 'updates'} onClick={() => setActiveTab('updates')} />
         <MobileTabItem icon={<Users size={20} />} active={activeTab === 'membership'} onClick={() => setActiveTab('membership')} />
       </nav>
 
-      {/* 5. MODALS & POUCHES */}
+      {/* ADMIN UPLOAD MODAL */}
       {isAdminModalOpen && (
         <AdminUploadModal 
           onClose={() => setIsAdminModalOpen(false)} 
@@ -350,7 +349,7 @@ const Dashboard = ({ user, profile }) => {
         />
       )}
 
-      {/* 📚 SLIDE-UP LIBRARY POUCH */}
+      {/* LIBRARY POUCH (BOTTOM DRAWER) */}
       <LibraryPouch 
         isOpen={isLibraryPouchOpen} 
         onClose={() => setIsLibraryPouchOpen(false)} 
