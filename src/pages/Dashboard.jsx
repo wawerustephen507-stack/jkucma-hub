@@ -5,6 +5,8 @@ import LibrarySection from '../components/LibrarySection';
 import PastPapers from '../components/PastPapers';
 import AdminUploadModal from '../components/AdminUploadModal';
 import Membership from '../components/Membership'; 
+import AdvertCarousel from '../components/AdvertCarousel';
+import LibraryPouch from '../components/LibraryPouch';
 import { 
   BookOpen, Bell, Users, Home, ChevronRight, Camera, X, LogOut, BadgeCheck,
   FileText, ShieldCheck, Calendar, Award, CreditCard, ArrowRight, KeyRound,
@@ -17,6 +19,11 @@ const Dashboard = ({ user, profile }) => {
   const [profileImage, setProfileImage] = useState(null);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [officialLinks, setOfficialLinks] = useState([]); 
+
+  // 🏥 NEW STATES: For Adverts & Slide-up Library Pouch
+  const [isLibraryPouchOpen, setIsLibraryPouchOpen] = useState(false);
+  const [adverts, setAdverts] = useState([]);
+  const [libraryResources, setLibraryResources] = useState([]);
 
   const [latestAnnouncement, setLatestAnnouncement] = useState({
     title: "JKUCMA Digital Hub",
@@ -49,6 +56,23 @@ const Dashboard = ({ user, profile }) => {
           .order('created_at', { ascending: true });
         
         if (linksData) setOfficialLinks(linksData);
+
+        // 🏥 FETCH ADVERTS
+        const { data: adData } = await supabase
+          .from('adverts')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false });
+
+        if (adData && adData.length > 0) setAdverts(adData);
+
+        // 🏥 FETCH CLINICAL LIBRARY ASSETS
+        const { data: libData } = await supabase
+          .from('clinical_library')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (libData && libData.length > 0) setLibraryResources(libData);
 
       } catch (err) {
         console.error("Cloud Connection Error:", err.message);
@@ -129,7 +153,7 @@ const Dashboard = ({ user, profile }) => {
         
         <nav className="space-y-2 flex-1">
           <NavItem icon={<Home size={20} />} label="Home" active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
-          <NavItem icon={<BookOpen size={20} />} label="Library" active={activeTab === 'library'} onClick={() => setActiveTab('library')} />
+          <NavItem icon={<BookOpen size={20} />} label="Library Pouch" active={isLibraryPouchOpen} onClick={() => setIsLibraryPouchOpen(true)} />
           <NavItem icon={<Bell size={20} />} label="Updates" active={activeTab === 'updates'} onClick={() => setActiveTab('updates')} />
           <NavItem icon={<Users size={20} />} label="Membership" active={activeTab === 'membership'} onClick={() => setActiveTab('membership')} />
           
@@ -151,7 +175,7 @@ const Dashboard = ({ user, profile }) => {
           <img src="/jkucma-logo.png" className="w-8 h-8 rounded-full bg-white p-0.5" alt="Logo" />
           <span className="font-black text-xs tracking-tighter uppercase">JKUCMA HUB</span>
         </div>
-        <LogOut size={18} onClick={handleSignOut} className="text-red-300 opacity-70" />
+        <LogOut size={18} onClick={handleSignOut} className="text-red-300 opacity-70 cursor-pointer" />
       </div>
 
       {/* 3. MAIN CONTENT AREA */}
@@ -207,6 +231,7 @@ const Dashboard = ({ user, profile }) => {
         <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6 flex-1 w-full pb-10">
           {activeTab === 'home' ? (
             <>
+              {/* LIVE ANNOUNCEMENT & EVENT SECTION */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-gradient-to-br from-blue-600 to-blue-800 p-6 lg:p-8 rounded-[1.5rem] lg:rounded-[2.5rem] text-white shadow-xl relative overflow-hidden">
                   <div className="relative z-10">
@@ -239,19 +264,23 @@ const Dashboard = ({ user, profile }) => {
                 </div>
               </div>
 
+              {/* 📢 AUTO-SLIDING ADVERT CAROUSEL */}
+              <AdvertCarousel adverts={adverts} />
+
+              {/* GATEWAY ACCESS 2X2 / 4X1 GRID */}
               <section>
                 <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-2">Gateway Access</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <QuickAction onClick={() => setActiveTab('library')} icon={<BookOpen className="text-blue-600" />} label="Library" color="bg-blue-100" />
+                  <QuickAction onClick={() => setIsLibraryPouchOpen(true)} icon={<BookOpen className="text-blue-600" />} label="Library" color="bg-blue-100" />
                   <QuickAction onClick={() => setActiveTab('updates')} icon={<Bell className="text-orange-600" />} label="Events" color="bg-orange-100" />
                   <QuickAction onClick={() => setActiveTab('membership')} icon={<Users className="text-green-600" />} label="Member" color="bg-green-100" />
                   <QuickAction onClick={() => setActiveTab('papers')} icon={<FileText className="text-red-600" />} label="Papers" color="bg-red-100" />
                 </div>
               </section>
 
+              {/* STATS & EVENTS OVERVIEW */}
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 pb-8">
                 <div className="xl:col-span-2 space-y-6">
-                  <LibrarySection />
                   <EventsFeed />
                 </div>
                 <div className="space-y-6">
@@ -290,7 +319,7 @@ const Dashboard = ({ user, profile }) => {
           <div className="max-w-7xl mx-auto flex flex-col items-center gap-2">
             <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">© 2026 JKUCMA Association</p>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
-               Lead Architect: <span className="text-blue-600 font-black">Stephen Waweru Wangari</span>
+                Lead Architect: <span className="text-blue-600 font-black">Stephen Waweru Wangari</span>
             </p>
             <div className="mt-3 inline-flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100">
                <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
@@ -303,17 +332,31 @@ const Dashboard = ({ user, profile }) => {
       {/* 4. MOBILE BOTTOM NAVIGATION */}
       <nav className="lg:hidden fixed bottom-0 w-full bg-white/95 backdrop-blur-md border-t border-slate-100 flex justify-around items-center py-4 z-50 shadow-[0_-5px_20px_rgba(0,0,0,0.06)] px-2">
         <MobileTabItem icon={<Home size={20} />} active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
-        <MobileTabItem icon={<BookOpen size={20} />} active={activeTab === 'library'} onClick={() => setActiveTab('library')} />
+        <MobileTabItem icon={<BookOpen size={20} />} active={isLibraryPouchOpen} onClick={() => setIsLibraryPouchOpen(true)} />
         
         {profile?.role === 'Admin' && (
-          <MobileTabItem icon={<ShieldCheck size={22} className="text-green-600" onClick={() => setIsAdminModalOpen(true)} />} />
+          <MobileTabItem icon={<ShieldCheck size={22} className="text-green-600" />} onClick={() => setIsAdminModalOpen(true)} />
         )}
 
         <MobileTabItem icon={<Bell size={20} />} active={activeTab === 'updates'} onClick={() => setActiveTab('updates')} />
         <MobileTabItem icon={<Users size={20} />} active={activeTab === 'membership'} onClick={() => setActiveTab('membership')} />
       </nav>
 
-      {isAdminModalOpen && <AdminUploadModal onClose={() => setIsAdminModalOpen(false)} onUploadSuccess={() => window.location.reload()} />}
+      {/* 5. MODALS & POUCHES */}
+      {isAdminModalOpen && (
+        <AdminUploadModal 
+          onClose={() => setIsAdminModalOpen(false)} 
+          onUploadSuccess={() => window.location.reload()} 
+        />
+      )}
+
+      {/* 📚 SLIDE-UP LIBRARY POUCH */}
+      <LibraryPouch 
+        isOpen={isLibraryPouchOpen} 
+        onClose={() => setIsLibraryPouchOpen(false)} 
+        resources={libraryResources} 
+      />
+
     </div>
   );
 };
