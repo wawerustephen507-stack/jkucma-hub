@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import EventsFeed from '../components/EventsFeed';
@@ -177,7 +176,7 @@ const Dashboard = ({ user, profile }) => {
         <LogOut size={18} onClick={handleSignOut} className="text-red-300 opacity-70 cursor-pointer" />
       </div>
 
-      {/* MAIN CONTENT */}
+      {/* MAIN CONTENT AREA */}
       <main className="flex-1 lg:ml-64 flex flex-col min-h-screen pt-14 lg:pt-0 pb-32 lg:pb-0">
         <header className="bg-white lg:bg-transparent p-4 lg:p-8 flex justify-between items-center relative z-40">
           <div className="max-w-[65%]">
@@ -313,7 +312,7 @@ const Dashboard = ({ user, profile }) => {
           <SocialIcon icon={<Globe size={20} className="text-white/70 hover:text-white" />} link="https://jkucma.vercel.app" />
         </div>
 
-        {/* FOOTER */}
+        {/* PRODUCTION FOOTER */}
         <footer className="bg-white p-10 border-t border-slate-100 text-center mb-2 lg:mb-0">
           <div className="max-w-7xl mx-auto flex flex-col items-center gap-2">
             <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">© 2026 JKUCMA Association</p>
@@ -334,7 +333,7 @@ const Dashboard = ({ user, profile }) => {
         <MobileTabItem icon={<BookOpen size={20} />} active={isLibraryPouchOpen} onClick={() => setIsLibraryPouchOpen(true)} />
         
         {profile?.role === 'Admin' && (
-          <MobileTabItem icon={<ShieldCheck size={22} className="text-green-600" />} onClick={() => setIsAdminModalOpen(true)} />
+          <MobileTabItem icon={<ShieldCheck size={22} className="text-green-600" onClick={() => setIsAdminModalOpen(true)} />} />
         )}
 
         <MobileTabItem icon={<Bell size={20} />} active={activeTab === 'updates'} onClick={() => setActiveTab('updates')} />
@@ -349,7 +348,7 @@ const Dashboard = ({ user, profile }) => {
         />
       )}
 
-      {/* LIBRARY POUCH (BOTTOM DRAWER) */}
+      {/* 📚 SLIDE-UP LIBRARY POUCH */}
       <LibraryPouch 
         isOpen={isLibraryPouchOpen} 
         onClose={() => setIsLibraryPouchOpen(false)} 
