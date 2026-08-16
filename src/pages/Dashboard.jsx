@@ -20,7 +20,7 @@ const Dashboard = ({ user, profile }) => {
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [officialLinks, setOfficialLinks] = useState([]); 
 
-  // 🏥 NEW STATES: For Adverts & Slide-up Library Pouch
+  // 🏥 STATES: For Sliding Adverts & Slide-up Library Pouch
   const [isLibraryPouchOpen, setIsLibraryPouchOpen] = useState(false);
   const [adverts, setAdverts] = useState([]);
   const [libraryResources, setLibraryResources] = useState([]);
@@ -87,7 +87,7 @@ const Dashboard = ({ user, profile }) => {
     if (!file) return;
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${profile.id}-${Date.now()}.${fileExt}`;
+      const fileName = `${profile?.id || 'avatar'}-${Date.now()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage.from('avatars').upload(fileName, file);
       if (uploadError) throw uploadError;
 
@@ -195,7 +195,7 @@ const Dashboard = ({ user, profile }) => {
             </div>
             
             <div onClick={() => setShowProfile(!showProfile)} className="w-9 h-9 lg:w-12 lg:h-12 rounded-2xl bg-[#1a5d1a] flex items-center justify-center text-white font-black shadow-lg cursor-pointer border-2 border-white overflow-hidden active:scale-95 transition-transform">
-              {(profile?.avatar_url || profileImage) ? <img src={profile?.avatar_url || profileImage} className="w-full h-full object-cover" /> : profile?.full_name?.charAt(0)}
+              {(profile?.avatar_url || profileImage) ? <img src={profile?.avatar_url || profileImage} className="w-full h-full object-cover" alt="Profile" /> : profile?.full_name?.charAt(0) || 'M'}
             </div>
 
             {showProfile && (
@@ -206,7 +206,7 @@ const Dashboard = ({ user, profile }) => {
                   <div className="text-center">
                     <div className="relative w-20 h-20 mx-auto mb-4">
                       <div className="w-full h-full bg-slate-50 rounded-[1.5rem] flex items-center justify-center text-[#1a5d1a] font-black text-2xl overflow-hidden border-4 border-white shadow-md">
-                        {(profile?.avatar_url || profileImage) ? <img src={profile?.avatar_url || profileImage} className="w-full h-full object-cover" /> : "M"}
+                        {(profile?.avatar_url || profileImage) ? <img src={profile?.avatar_url || profileImage} className="w-full h-full object-cover" alt="Avatar" /> : "M"}
                       </div>
                       <label className="absolute -bottom-1 -right-1 bg-[#003366] text-white p-2 rounded-xl cursor-pointer hover:bg-blue-800 shadow-lg border-2 border-white transition-transform active:scale-90">
                         <Camera size={14} />
@@ -335,7 +335,7 @@ const Dashboard = ({ user, profile }) => {
         <MobileTabItem icon={<BookOpen size={20} />} active={isLibraryPouchOpen} onClick={() => setIsLibraryPouchOpen(true)} />
         
         {profile?.role === 'Admin' && (
-          <MobileTabItem icon={<ShieldCheck size={22} className="text-green-600" />} onClick={() => setIsAdminModalOpen(true)} />
+          <MobileTabItem icon={<ShieldCheck size={22} className="text-green-600" onClick={() => setIsAdminModalOpen(true)} />} />
         )}
 
         <MobileTabItem icon={<Bell size={20} />} active={activeTab === 'updates'} onClick={() => setActiveTab('updates')} />
