@@ -1,38 +1,35 @@
+
 import React, { useState } from 'react';
 import { X, Search, BookOpen, Download } from 'lucide-react';
 
-export const LibraryPouch = ({ isOpen, onClose, resources = [] }) => {
+const LibraryPouch = ({ isOpen, onClose, resources = [] }) => {
   const [query, setQuery] = useState("");
 
   if (!isOpen) return null;
 
-  const filtered = resources.filter(res => 
+  const safeResources = Array.isArray(resources) ? resources : [];
+  const filtered = safeResources.filter(res => 
     (res.title || '').toLowerCase().includes(query.toLowerCase()) ||
     (res.category || '').toLowerCase().includes(query.toLowerCase())
   );
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      {/* BACKDROP CLICK DISMISS */}
       <div className="absolute inset-0" onClick={onClose} />
 
-      {/* POUCH SHEET */}
       <div className="bg-white w-full max-w-md max-h-[82vh] h-[80vh] rounded-t-[3rem] p-6 flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-300 relative z-10">
-        
-        {/* PULL HANDLE */}
         <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4 cursor-pointer" onClick={onClose} />
         
         <div className="flex items-center justify-between mb-3 px-1">
           <div>
             <h2 className="text-lg font-black text-slate-800 uppercase tracking-tight">Clinical Library</h2>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{resources.length} Resources Available</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{safeResources.length} Resources Available</p>
           </div>
           <button onClick={onClose} className="p-2 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200">
             <X size={16} />
           </button>
         </div>
 
-        {/* SEARCH INPUT */}
         <div className="relative mb-3">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={15} />
           <input 
@@ -44,7 +41,6 @@ export const LibraryPouch = ({ isOpen, onClose, resources = [] }) => {
           />
         </div>
 
-        {/* INNER SCROLLABLE LIST */}
         <div className="flex-1 overflow-y-auto space-y-2.5 pr-1">
           {filtered.map((item, idx) => (
             <div key={item.id || idx} className="p-3.5 bg-slate-50 rounded-2xl flex items-center justify-between border border-slate-100 hover:bg-blue-50/50 transition-colors">

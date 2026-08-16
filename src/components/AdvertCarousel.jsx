@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { ExternalLink } from 'lucide-react';
 
-export const AdvertCarousel = ({ adverts = [] }) => {
+const AdvertCarousel = ({ adverts = [] }) => {
   const [current, setCurrent] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
-    if (!adverts.length || isPaused) return;
+    if (!adverts || adverts.length <= 1 || isPaused) return;
     const timer = setInterval(() => {
       setCurrent((prev) => (prev + 1) % adverts.length);
-    }, 4500); // Transitions every 4.5 seconds
+    }, 4500);
 
     return () => clearInterval(timer);
-  }, [adverts.length, isPaused]);
+  }, [adverts, isPaused]);
 
-  if (!adverts.length) return null;
+  if (!adverts || adverts.length === 0) return null;
 
   return (
     <div 
@@ -24,7 +24,6 @@ export const AdvertCarousel = ({ adverts = [] }) => {
       onTouchStart={() => setIsPaused(true)}
       onTouchEnd={() => setIsPaused(false)}
     >
-      {/* CAROUSEL CONTAINER */}
       <div className="overflow-hidden rounded-[2.2rem] shadow-xl">
         <div 
           className="flex transition-transform duration-700 ease-out"
@@ -38,7 +37,6 @@ export const AdvertCarousel = ({ adverts = [] }) => {
               }`}
             >
               {ad.image_url ? (
-                /* FULL IMAGE BANNER */
                 <a 
                   href={ad.action_url || "#"} 
                   target="_blank" 
@@ -52,7 +50,6 @@ export const AdvertCarousel = ({ adverts = [] }) => {
                   />
                 </a>
               ) : (
-                /* HYBRID TEXT & BADGE CARD */
                 <>
                   <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
 
@@ -85,20 +82,21 @@ export const AdvertCarousel = ({ adverts = [] }) => {
         </div>
       </div>
 
-      {/* PAGINATION DOT INDICATORS */}
-      <div className="flex justify-center items-center gap-1.5 mt-2.5">
-        {adverts.map((_, idx) => (
-          <button
-            key={idx}
-            onClick={() => setCurrent(idx)}
-            className={`h-1.5 rounded-full transition-all duration-300 ${
-              current === idx ? 'w-5 bg-[#003366]' : 'w-1.5 bg-slate-300'
-            }`}
-          />
-        ))}
-      </div>
+      {adverts.length > 1 && (
+        <div className="flex justify-center items-center gap-1.5 mt-2.5">
+          {adverts.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrent(idx)}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                current === idx ? 'w-5 bg-[#003366]' : 'w-1.5 bg-slate-300'
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
 
-export default AdvertCarousel;tt
+export default AdvertCarousel;
