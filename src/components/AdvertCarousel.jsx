@@ -22,7 +22,7 @@ const AdvertCarousel = ({ adverts = [] }) => {
   const defaultGradients = [
     'linear-gradient(135deg, #064e3b 0%, #1a5d1a 100%)',
     'linear-gradient(135deg, #002244 0%, #003366 100%)',
-    'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'
+    'linear-gradient(135deg, #000000 0%, #1c1917 100%)'
   ];
 
   return (
@@ -33,7 +33,7 @@ const AdvertCarousel = ({ adverts = [] }) => {
       onTouchStart={() => setIsPaused(true)}
       onTouchEnd={() => setIsPaused(false)}
     >
-      {/* ZOOMABLE CONTAINER */}
+      {/* ZOOMABLE CAROUSEL CONTAINER */}
       <div 
         className={`overflow-hidden rounded-[1.5rem] sm:rounded-[2rem] shadow-lg border border-slate-100/50 transition-transform duration-300 ${
           isZoomed ? 'scale-[1.03] shadow-2xl z-20' : 'scale-100'
@@ -46,27 +46,44 @@ const AdvertCarousel = ({ adverts = [] }) => {
           {safeAdverts.map((ad, idx) => (
             <div 
               key={ad.id || idx} 
-              className="w-full shrink-0 min-w-full h-[125px] sm:h-[155px] lg:h-[175px] rounded-[1.5rem] sm:rounded-[2rem] relative flex items-center justify-between px-4 py-3 sm:px-6 sm:py-5 lg:px-8 text-white box-border"
+              className="w-full shrink-0 min-w-full h-[125px] sm:h-[155px] lg:h-[175px] rounded-[1.5rem] sm:rounded-[2rem] relative flex items-center justify-between px-4 py-3 sm:px-6 sm:py-5 lg:px-8 text-white box-border overflow-hidden"
               style={{
-                background: !ad.image_url ? (defaultGradients[idx % defaultGradients.length]) : '#0f172a'
+                background: ad.image_url 
+                  ? '#0f172a' 
+                  : (ad.bg_gradient || defaultGradients[idx % defaultGradients.length])
               }}
             >
               {ad.image_url ? (
-                /* FULL IMAGE BANNER */
-                <a 
-                  href={ad.action_url || "#"} 
-                  target="_blank" 
-                  rel="noreferrer" 
-                  className="w-full h-full block"
-                >
-                  <img 
-                    src={ad.image_url} 
-                    alt={ad.title || "Advertisement"} 
-                    className="w-full h-full object-cover rounded-[1.5rem] sm:rounded-[2rem]" 
-                  />
-                </a>
+                /* FULL IMAGE BANNER WITH OVERLAY CONTROLS */
+                <div className="relative w-full h-full">
+                  <a 
+                    href={ad.action_url || "#"} 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="w-full h-full block"
+                  >
+                    <img 
+                      src={ad.image_url} 
+                      alt={ad.title || "Advertisement"} 
+                      className="w-full h-full object-cover rounded-[1.5rem] sm:rounded-[2rem]" 
+                    />
+                  </a>
+
+                  {/* FLOATING ZOOM TOGGLE ON BANNER */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setIsZoomed(!isZoomed);
+                    }}
+                    className="absolute top-2 right-2 p-2 bg-slate-900/60 hover:bg-slate-900/80 active:scale-90 text-white rounded-xl backdrop-blur-md transition-all shadow-md z-10"
+                    title={isZoomed ? "Zoom Out" : "Zoom In"}
+                  >
+                    {isZoomed ? <ZoomOut size={13} /> : <ZoomIn size={13} />}
+                  </button>
+                </div>
               ) : (
-                /* COMPACT PROPORTIONATE CARD */
+                /* BRANDED TEXT/GRADIENT CARD */
                 <>
                   <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
 
@@ -87,7 +104,7 @@ const AdvertCarousel = ({ adverts = [] }) => {
                     </p>
                   </div>
 
-                  {/* ACTION CONTROLS */}
+                  {/* ACTION & ZOOM CONTROLS */}
                   <div className="relative z-10 flex items-center gap-1.5 shrink-0 ml-2">
                     <button
                       type="button"
