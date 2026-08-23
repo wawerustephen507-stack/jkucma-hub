@@ -19,10 +19,14 @@ const AdvertCarousel = ({ adverts = [] }) => {
 
   if (safeAdverts.length === 0) return null;
 
+  // High-contrast dark gradient themes for adverts without custom background values
   const defaultGradients = [
     'linear-gradient(135deg, #064e3b 0%, #1a5d1a 100%)',
     'linear-gradient(135deg, #002244 0%, #003366 100%)',
-    'linear-gradient(135deg, #000000 0%, #1c1917 100%)'
+    'linear-gradient(135deg, #000000 0%, #1c1917 100%)',
+    'linear-gradient(135deg, #b45309 0%, #d97706 100%)',
+    'linear-gradient(135deg, #881337 0%, #be123c 100%)',
+    'linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%)'
   ];
 
   return (
@@ -43,94 +47,97 @@ const AdvertCarousel = ({ adverts = [] }) => {
           className="flex transition-transform duration-700 ease-out"
           style={{ transform: `translateX(-${current * 100}%)` }}
         >
-          {safeAdverts.map((ad, idx) => (
-            <div 
-              key={ad.id || idx} 
-              className="w-full shrink-0 min-w-full h-[125px] sm:h-[155px] lg:h-[175px] rounded-[1.5rem] sm:rounded-[2rem] relative flex items-center justify-between px-4 py-3 sm:px-6 sm:py-5 lg:px-8 text-white box-border overflow-hidden"
-              style={{
-                background: ad.image_url 
-                  ? '#0f172a' 
-                  : (ad.bg_gradient || defaultGradients[idx % defaultGradients.length])
-              }}
-            >
-              {ad.image_url ? (
-                /* FULL IMAGE BANNER WITH OVERLAY CONTROLS */
-                <div className="relative w-full h-full">
-                  <a 
-                    href={ad.action_url || "#"} 
-                    target="_blank" 
-                    rel="noreferrer" 
-                    className="w-full h-full block"
-                  >
-                    <img 
-                      src={ad.image_url} 
-                      alt={ad.title || "Advertisement"} 
-                      className="w-full h-full object-cover rounded-[1.5rem] sm:rounded-[2rem]" 
-                    />
-                  </a>
+          {safeAdverts.map((ad, idx) => {
+            const hasValidGradient = Boolean(ad.bg_gradient && ad.bg_gradient.includes('gradient'));
+            const resolvedBg = ad.image_url 
+              ? '#0f172a' 
+              : (hasValidGradient ? ad.bg_gradient : defaultGradients[idx % defaultGradients.length]);
 
-                  {/* FLOATING ZOOM TOGGLE ON BANNER */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setIsZoomed(!isZoomed);
-                    }}
-                    className="absolute top-2 right-2 p-2 bg-slate-900/60 hover:bg-slate-900/80 active:scale-90 text-white rounded-xl backdrop-blur-md transition-all shadow-md z-10"
-                    title={isZoomed ? "Zoom Out" : "Zoom In"}
-                  >
-                    {isZoomed ? <ZoomOut size={13} /> : <ZoomIn size={13} />}
-                  </button>
-                </div>
-              ) : (
-                /* BRANDED TEXT/GRADIENT CARD */
-                <>
-                  <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+            return (
+              <div 
+                key={ad.id || idx} 
+                className="w-full shrink-0 min-w-full h-[125px] sm:h-[155px] lg:h-[175px] rounded-[1.5rem] sm:rounded-[2rem] relative flex items-center justify-between px-4 py-3 sm:px-6 sm:py-5 lg:px-8 text-white box-border overflow-hidden"
+                style={{ background: resolvedBg }}
+              >
+                {ad.image_url ? (
+                  /* FULL IMAGE BANNER WITH OVERLAY CONTROLS */
+                  <div className="relative w-full h-full">
+                    <a 
+                      href={ad.action_url || "#"} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="w-full h-full block"
+                    >
+                      <img 
+                        src={ad.image_url} 
+                        alt={ad.title || "Advertisement"} 
+                        className="w-full h-full object-cover rounded-[1.5rem] sm:rounded-[2rem]" 
+                      />
+                    </a>
 
-                  <div className="relative z-10 max-w-[75%] sm:max-w-[70%] space-y-1">
-                    <div className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-md px-2 sm:px-2.5 py-0.5 rounded-full text-white shadow-sm border border-white/20">
-                      <Sparkles size={10} className="text-yellow-300 animate-pulse" />
-                      <span className="text-[7px] sm:text-[9px] font-black uppercase tracking-[0.2em]">
-                        {ad.tag || 'SPONSORED'}
-                      </span>
-                    </div>
-
-                    <h3 className="text-xs sm:text-base lg:text-lg font-black uppercase tracking-tight leading-tight text-white line-clamp-1">
-                      {ad.title}
-                    </h3>
-
-                    <p className="text-[9px] sm:text-xs font-medium text-white/90 leading-snug line-clamp-2">
-                      {ad.subtitle}
-                    </p>
-                  </div>
-
-                  {/* ACTION & ZOOM CONTROLS */}
-                  <div className="relative z-10 flex items-center gap-1.5 shrink-0 ml-2">
+                    {/* FLOATING ZOOM TOGGLE ON BANNER */}
                     <button
                       type="button"
-                      onClick={() => setIsZoomed(!isZoomed)}
-                      className="p-2 sm:p-2.5 bg-white/15 hover:bg-white/25 active:scale-90 text-white rounded-xl backdrop-blur-sm transition-all"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setIsZoomed(!isZoomed);
+                      }}
+                      className="absolute top-2 right-2 p-2 bg-slate-900/60 hover:bg-slate-900/80 active:scale-90 text-white rounded-xl backdrop-blur-md transition-all shadow-md z-10"
                       title={isZoomed ? "Zoom Out" : "Zoom In"}
                     >
-                      {isZoomed ? <ZoomOut size={14} /> : <ZoomIn size={14} />}
+                      {isZoomed ? <ZoomOut size={13} /> : <ZoomIn size={13} />}
                     </button>
-
-                    {ad.action_url && (
-                      <a 
-                        href={ad.action_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="px-3 py-2 sm:px-4 sm:py-2.5 bg-white text-slate-900 rounded-xl shadow-md active:scale-90 hover:bg-slate-50 transition-all flex items-center gap-1 font-black text-[9px] sm:text-xs uppercase tracking-wider"
-                      >
-                        <span>Open</span>
-                        <ExternalLink size={12} className="text-[#1a5d1a]" />
-                      </a>
-                    )}
                   </div>
-                </>
-              )}
-            </div>
-          ))}
+                ) : (
+                  /* BRANDED TEXT/GRADIENT CARD */
+                  <>
+                    <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+
+                    <div className="relative z-10 max-w-[75%] sm:max-w-[70%] space-y-1">
+                      <div className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-md px-2 sm:px-2.5 py-0.5 rounded-full text-white shadow-sm border border-white/20">
+                        <Sparkles size={10} className="text-yellow-300 animate-pulse" />
+                        <span className="text-[7px] sm:text-[9px] font-black uppercase tracking-[0.2em]">
+                          {ad.tag || 'SPONSORED'}
+                        </span>
+                      </div>
+
+                      <h3 className="text-xs sm:text-base lg:text-lg font-black uppercase tracking-tight leading-tight text-white line-clamp-1">
+                        {ad.title}
+                      </h3>
+
+                      <p className="text-[9px] sm:text-xs font-medium text-white/90 leading-snug line-clamp-2">
+                        {ad.subtitle}
+                      </p>
+                    </div>
+
+                    {/* ACTION & ZOOM CONTROLS */}
+                    <div className="relative z-10 flex items-center gap-1.5 shrink-0 ml-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsZoomed(!isZoomed)}
+                        className="p-2 sm:p-2.5 bg-white/15 hover:bg-white/25 active:scale-90 text-white rounded-xl backdrop-blur-sm transition-all"
+                        title={isZoomed ? "Zoom Out" : "Zoom In"}
+                      >
+                        {isZoomed ? <ZoomOut size={14} /> : <ZoomIn size={14} />}
+                      </button>
+
+                      {ad.action_url && (
+                        <a 
+                          href={ad.action_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-3 py-2 sm:px-4 sm:py-2.5 bg-white text-slate-900 rounded-xl shadow-md active:scale-90 hover:bg-slate-50 transition-all flex items-center gap-1 font-black text-[9px] sm:text-xs uppercase tracking-wider"
+                        >
+                          <span>Open</span>
+                          <ExternalLink size={12} className="text-[#1a5d1a]" />
+                        </a>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
