@@ -31,7 +31,9 @@ const Dashboard = ({ user, profile }) => {
   });
   const [nextEvent, setNextEvent] = useState(null);
 
-  const isSuperAdmin = profile?.email === 'wawerustephen507@gmail.com';
+  // Super Admin Validation (Evaluates user auth email & profile email case-insensitively)
+  const currentUserEmail = (user?.email || profile?.email || '').toLowerCase().trim();
+  const isSuperAdmin = currentUserEmail === 'wawerustephen507@gmail.com';
 
   const fetchHubData = async () => {
     try {
@@ -159,13 +161,13 @@ const Dashboard = ({ user, profile }) => {
           <NavItem icon={<Bell size={20} />} label="Updates" active={activeTab === 'updates'} onClick={() => setActiveTab('updates')} />
           <NavItem icon={<Users size={20} />} label="Membership" active={activeTab === 'membership'} onClick={() => setActiveTab('membership')} />
           
-          {profile?.role === 'Admin' && (
+          {(profile?.role === 'Admin' || isSuperAdmin) && (
             <div className="mt-4 pt-4 border-t border-white/10">
               <NavItem icon={<ShieldCheck size={20} className="text-green-400" />} label="Admin Vault" onClick={() => setIsAdminModalOpen(true)} />
             </div>
           )}
 
-          {/* SUPER ADMIN ONLY ADVERT MANAGER */}
+          {/* SUPER ADMIN ADVERT MANAGER */}
           {isSuperAdmin && (
             <div className="mt-2 pt-2 border-t border-white/10">
               <NavItem 
@@ -188,16 +190,16 @@ const Dashboard = ({ user, profile }) => {
           <img src="/jkucma-logo.png" className="w-8 h-8 rounded-full bg-white p-0.5" alt="Logo" />
           <span className="font-black text-xs tracking-tighter uppercase">JKUCMA HUB</span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {isSuperAdmin && (
             <button 
               onClick={() => setIsAdvertModalOpen(true)} 
-              className="p-1.5 bg-yellow-400/20 text-yellow-300 rounded-xl text-[10px] font-black uppercase flex items-center gap-1"
+              className="px-2.5 py-1 bg-yellow-400/20 text-yellow-300 border border-yellow-400/30 rounded-xl text-[10px] font-black uppercase flex items-center gap-1 active:scale-95"
             >
-              <Sparkles size={13} /> Ads
+              <Sparkles size={12} /> Ads
             </button>
           )}
-          <LogOut size={18} onClick={handleSignOut} className="text-red-300 opacity-70 cursor-pointer" />
+          <LogOut size={18} onClick={handleSignOut} className="text-red-300 opacity-70 cursor-pointer p-1" />
         </div>
       </div>
 
@@ -334,7 +336,7 @@ const Dashboard = ({ user, profile }) => {
           <SocialIcon icon={<Facebook size={20} className="text-white/70 hover:text-white" />} link="https://facebook.com/jkucma" />
           <SocialIcon icon={<Twitter size={20} className="text-white/70 hover:text-white" />} link="https://twitter.com/jkucma" />
           <SocialIcon icon={<Youtube size={20} className="text-white/70 hover:text-white" />} link="https://youtube.com/jkucma" />
-          <SocialIcon icon={<Globe size={20} className="text-white/70 hover:text-white" />} link="https://jkucma.vercel.app" />
+          <SocialIcon icon={<Globe size={20} className="text-white/70 hover:text-white" />} link="https://jkucma-hub.vercel.app" />
         </div>
 
         {/* PRODUCTION FOOTER */}
@@ -357,7 +359,7 @@ const Dashboard = ({ user, profile }) => {
         <MobileTabItem icon={<Home size={20} />} active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
         <MobileTabItem icon={<BookOpen size={20} />} active={isLibraryPouchOpen} onClick={() => setIsLibraryPouchOpen(true)} />
         
-        {profile?.role === 'Admin' && (
+        {(profile?.role === 'Admin' || isSuperAdmin) && (
           <MobileTabItem icon={<ShieldCheck size={22} className="text-green-600" />} onClick={() => setIsAdminModalOpen(true)} />
         )}
 
@@ -378,7 +380,7 @@ const Dashboard = ({ user, profile }) => {
         <AdvertManagerModal
           isOpen={isAdvertModalOpen}
           onClose={() => setIsAdvertModalOpen(false)}
-          userEmail={profile?.email}
+          userEmail={currentUserEmail}
           onRefresh={() => fetchHubData()}
         />
       )}
