@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { 
   Key, X, FileText, BookOpen, Calendar, MessageSquare, 
-  Link2, UploadCloud, CheckCircle2, AlertCircle 
+  UploadCloud, CheckCircle2, AlertCircle, Sparkles 
 } from 'lucide-react';
 
 const AdminUploadModal = ({ onClose, onUploadSuccess }) => {
@@ -59,6 +59,16 @@ const AdminUploadModal = ({ onClose, onUploadSuccess }) => {
           created_at: new Date().toISOString()
         }]);
         if (error) throw error;
+      } else if (activeTab === 'adverts') {
+        const { error } = await supabase.from('adverts').insert([{
+          title,
+          subtitle: content,
+          tag: category || 'SPONSORED',
+          action_url: directUrl,
+          is_active: true,
+          created_at: new Date().toISOString()
+        }]);
+        if (error) throw error;
       }
 
       setMessage({ text: 'Successfully published to JKUCMA Hub!', type: 'success' });
@@ -77,7 +87,8 @@ const AdminUploadModal = ({ onClose, onUploadSuccess }) => {
     { id: 'papers', label: 'PAPERS', icon: <FileText size={18} /> },
     { id: 'library', label: 'LIBRARY', icon: <BookOpen size={18} /> },
     { id: 'events', label: 'EVENTS', icon: <Calendar size={18} /> },
-    { id: 'feed', label: 'FEED', icon: <MessageSquare size={18} /> }
+    { id: 'feed', label: 'FEED', icon: <MessageSquare size={18} /> },
+    { id: 'adverts', label: 'ADVERTS', icon: <Sparkles size={18} className="text-yellow-400" /> }
   ];
 
   return (
@@ -86,7 +97,7 @@ const AdminUploadModal = ({ onClose, onUploadSuccess }) => {
       {/* BACKGROUND TAP CLOSE */}
       <div className="absolute inset-0" onClick={onClose} />
 
-      {/* FULL-HEIGHT MODAL CONTAINER */}
+      {/* FULL-HEIGHT RESPONSIVE CONTAINER */}
       <div className="relative w-full max-w-xl bg-white rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl flex flex-col h-[92vh] sm:h-auto sm:max-h-[90vh] overflow-hidden z-10 animate-in slide-in-from-bottom duration-300">
         
         {/* HEADER BAR */}
@@ -115,7 +126,7 @@ const AdminUploadModal = ({ onClose, onUploadSuccess }) => {
             <button
               key={opt.id}
               onClick={() => { setActiveTab(opt.id); setMessage({ text: '', type: '' }); }}
-              className={`flex-1 min-w-[75px] py-2.5 px-3 rounded-2xl flex flex-col items-center gap-1 text-[9px] font-black uppercase tracking-wider transition-all ${
+              className={`flex-1 min-w-[70px] py-2.5 px-3 rounded-2xl flex flex-col items-center gap-1 text-[9px] font-black uppercase tracking-wider transition-all ${
                 activeTab === opt.id 
                   ? 'bg-[#003366] text-white shadow-md' 
                   : 'bg-white text-slate-500 hover:bg-slate-100 border border-slate-200/60'
@@ -143,7 +154,7 @@ const AdminUploadModal = ({ onClose, onUploadSuccess }) => {
             <input 
               type="text" 
               required
-              placeholder="e.g. End of Stage Surgery Exam" 
+              placeholder={activeTab === 'adverts' ? 'e.g. Clinical Scrubs Special Offer' : 'e.g. End of Stage Surgery Exam'} 
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-600"
@@ -195,13 +206,28 @@ const AdminUploadModal = ({ onClose, onUploadSuccess }) => {
             </div>
           )}
 
-          {(activeTab === 'papers' || activeTab === 'library') && (
+          {activeTab === 'adverts' && (
             <div>
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">Direct URL (Drive / PDF Link)</label>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">Advert Tag / Badge</label>
+              <input 
+                type="text" 
+                placeholder="e.g. SPONSORED, SPECIAL OFFER, NOTICE" 
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-600"
+              />
+            </div>
+          )}
+
+          {(activeTab === 'papers' || activeTab === 'library' || activeTab === 'adverts') && (
+            <div>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">
+                {activeTab === 'adverts' ? 'Action / Booking URL' : 'Direct URL (Drive / PDF Link)'}
+              </label>
               <input 
                 type="url" 
                 required
-                placeholder="https://drive.google.com/..." 
+                placeholder="https://..." 
                 value={directUrl}
                 onChange={(e) => setDirectUrl(e.target.value)}
                 className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-600"
@@ -247,13 +273,15 @@ const AdminUploadModal = ({ onClose, onUploadSuccess }) => {
             </>
           )}
 
-          {activeTab === 'feed' && (
+          {(activeTab === 'feed' || activeTab === 'adverts') && (
             <div>
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">Broadcast Content</label>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">
+                {activeTab === 'adverts' ? 'Advert Subtitle / Description' : 'Broadcast Content'}
+              </label>
               <textarea 
                 rows={4} 
                 required
-                placeholder="Official message to all active association members..."
+                placeholder={activeTab === 'adverts' ? 'Describe the offer or contact instructions...' : 'Official message to all active association members...'}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-medium outline-none focus:ring-2 focus:ring-emerald-600"
