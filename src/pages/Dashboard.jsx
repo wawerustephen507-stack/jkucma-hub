@@ -7,9 +7,10 @@ import AdminUploadModal from '../components/AdminUploadModal';
 import Membership from '../components/Membership'; 
 import AdvertCarousel from '../components/AdvertCarousel';
 import LibraryPouch from '../components/LibraryPouch';
+import AdvertManagerModal from '../components/AdvertManagerModal';
 import { 
   BookOpen, Bell, Users, Home, ChevronRight, Camera, X, LogOut, BadgeCheck,
-  FileText, ShieldCheck, Instagram, Facebook, Twitter, Youtube, Globe
+  FileText, ShieldCheck, Instagram, Facebook, Twitter, Youtube, Globe, Sparkles
 } from 'lucide-react';
 
 const Dashboard = ({ user, profile }) => {
@@ -17,6 +18,7 @@ const Dashboard = ({ user, profile }) => {
   const [showProfile, setShowProfile] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+  const [isAdvertModalOpen, setIsAdvertModalOpen] = useState(false);
   const [officialLinks, setOfficialLinks] = useState([]); 
 
   const [isLibraryPouchOpen, setIsLibraryPouchOpen] = useState(false);
@@ -29,52 +31,54 @@ const Dashboard = ({ user, profile }) => {
   });
   const [nextEvent, setNextEvent] = useState(null);
 
+  const isSuperAdmin = profile?.email === 'wawerustephen507@gmail.com';
+
+  const fetchHubData = async () => {
+    try {
+      const { data: annData } = await supabase
+        .from('announcements')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1);
+      
+      if (annData && annData.length > 0) setLatestAnnouncement(annData[0]);
+
+      const { data: evtData } = await supabase
+        .from('events')
+        .select('*')
+        .order('date', { ascending: true })
+        .limit(1);
+      
+      if (evtData && evtData.length > 0) setNextEvent(evtData[0]);
+
+      const { data: linksData } = await supabase
+        .from('official_links')
+        .select('*')
+        .order('created_at', { ascending: true });
+      
+      if (linksData) setOfficialLinks(linksData);
+
+      const { data: adData } = await supabase
+        .from('adverts')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+      if (adData && adData.length > 0) setAdverts(adData);
+
+      const { data: libData } = await supabase
+        .from('clinical_library')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (libData && libData.length > 0) setLibraryResources(libData);
+
+    } catch (err) {
+      console.error("Cloud Connection Error:", err.message);
+    }
+  };
+
   useEffect(() => {
-    const fetchHubData = async () => {
-      try {
-        const { data: annData } = await supabase
-          .from('announcements')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(1);
-        
-        if (annData && annData.length > 0) setLatestAnnouncement(annData[0]);
-
-        const { data: evtData } = await supabase
-          .from('events')
-          .select('*')
-          .order('date', { ascending: true })
-          .limit(1);
-        
-        if (evtData && evtData.length > 0) setNextEvent(evtData[0]);
-
-        const { data: linksData } = await supabase
-          .from('official_links')
-          .select('*')
-          .order('created_at', { ascending: true });
-        
-        if (linksData) setOfficialLinks(linksData);
-
-        const { data: adData } = await supabase
-          .from('adverts')
-          .select('*')
-          .eq('is_active', true)
-          .order('created_at', { ascending: false });
-
-        if (adData && adData.length > 0) setAdverts(adData);
-
-        const { data: libData } = await supabase
-          .from('clinical_library')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (libData && libData.length > 0) setLibraryResources(libData);
-
-      } catch (err) {
-        console.error("Cloud Connection Error:", err.message);
-      }
-    };
-    
     fetchHubData();
   }, []);
 
@@ -160,6 +164,17 @@ const Dashboard = ({ user, profile }) => {
               <NavItem icon={<ShieldCheck size={20} className="text-green-400" />} label="Admin Vault" onClick={() => setIsAdminModalOpen(true)} />
             </div>
           )}
+
+          {/* SUPER ADMIN ONLY ADVERT MANAGER */}
+          {isSuperAdmin && (
+            <div className="mt-2 pt-2 border-t border-white/10">
+              <NavItem 
+                icon={<Sparkles size={20} className="text-yellow-400 animate-pulse" />} 
+                label="Advert Manager" 
+                onClick={() => setIsAdvertModalOpen(true)} 
+              />
+            </div>
+          )}
         </nav>
 
         <div className="pt-2 border-t border-white/10">
@@ -173,7 +188,17 @@ const Dashboard = ({ user, profile }) => {
           <img src="/jkucma-logo.png" className="w-8 h-8 rounded-full bg-white p-0.5" alt="Logo" />
           <span className="font-black text-xs tracking-tighter uppercase">JKUCMA HUB</span>
         </div>
-        <LogOut size={18} onClick={handleSignOut} className="text-red-300 opacity-70 cursor-pointer" />
+        <div className="flex items-center gap-3">
+          {isSuperAdmin && (
+            <button 
+              onClick={() => setIsAdvertModalOpen(true)} 
+              className="p-1.5 bg-yellow-400/20 text-yellow-300 rounded-xl text-[10px] font-black uppercase flex items-center gap-1"
+            >
+              <Sparkles size={13} /> Ads
+            </button>
+          )}
+          <LogOut size={18} onClick={handleSignOut} className="text-red-300 opacity-70 cursor-pointer" />
+        </div>
       </div>
 
       {/* MAIN CONTENT AREA */}
@@ -317,11 +342,11 @@ const Dashboard = ({ user, profile }) => {
           <div className="max-w-7xl mx-auto flex flex-col items-center gap-2">
             <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">© 2026 JKUCMA Association</p>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
-                Lead Architect: <span className="text-blue-600 font-black">Stephen Waweru Wangari</span>
+              Lead Architect: <span className="text-blue-600 font-black">Stephen Waweru Wangari</span>
             </p>
             <div className="mt-3 inline-flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100">
-               <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-               <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Protocol Secured by SSL</span>
+              <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Protocol Secured by SSL</span>
             </div>
           </div>
         </footer>
@@ -333,7 +358,7 @@ const Dashboard = ({ user, profile }) => {
         <MobileTabItem icon={<BookOpen size={20} />} active={isLibraryPouchOpen} onClick={() => setIsLibraryPouchOpen(true)} />
         
         {profile?.role === 'Admin' && (
-          <MobileTabItem icon={<ShieldCheck size={22} className="text-green-600" onClick={() => setIsAdminModalOpen(true)} />} />
+          <MobileTabItem icon={<ShieldCheck size={22} className="text-green-600" />} onClick={() => setIsAdminModalOpen(true)} />
         )}
 
         <MobileTabItem icon={<Bell size={20} />} active={activeTab === 'updates'} onClick={() => setActiveTab('updates')} />
@@ -344,11 +369,21 @@ const Dashboard = ({ user, profile }) => {
       {isAdminModalOpen && (
         <AdminUploadModal 
           onClose={() => setIsAdminModalOpen(false)} 
-          onUploadSuccess={() => window.location.reload()} 
+          onUploadSuccess={() => fetchHubData()} 
         />
       )}
 
-      {/* 📚 SLIDE-UP LIBRARY POUCH */}
+      {/* SUPER ADMIN ADVERT MANAGER MODAL */}
+      {isSuperAdmin && (
+        <AdvertManagerModal
+          isOpen={isAdvertModalOpen}
+          onClose={() => setIsAdvertModalOpen(false)}
+          userEmail={profile?.email}
+          onRefresh={() => fetchHubData()}
+        />
+      )}
+
+      {/* 📚 EXPANDED SLIDE-UP LIBRARY POUCH */}
       <LibraryPouch 
         isOpen={isLibraryPouchOpen} 
         onClose={() => setIsLibraryPouchOpen(false)} 
