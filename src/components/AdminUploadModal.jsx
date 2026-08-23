@@ -1,146 +1,276 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { X, Book, FileText, Calendar, Megaphone, Loader2, KeyRound, Link as LinkIcon, Trash2 } from 'lucide-react';
+import { 
+  Key, X, FileText, BookOpen, Calendar, MessageSquare, 
+  Link2, UploadCloud, CheckCircle2, AlertCircle 
+} from 'lucide-react';
 
 const AdminUploadModal = ({ onClose, onUploadSuccess }) => {
+  const [activeTab, setActiveTab] = useState('papers');
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState('paper'); 
-  const [formData, setFormData] = useState({});
-  const [existingItems, setExistingItems] = useState([]);
+  const [message, setMessage] = useState({ text: '', type: '' });
 
-  // 🏥 Table mapping for all 5 categories
-  const tableMap = {
-    paper: 'past_papers',
-    library: 'clinical_library', 
-    event: 'events',
-    announcement: 'announcements',
-    link: 'official_links' 
-  };
-  // 📥 Fetch items for the current mode so we can delete them
-  const fetchItems = async () => {
-    const { data } = await supabase
-      .from(tableMap[mode])
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (data) setExistingItems(data);
-  };
+  // Form states
+  const [title, setTitle] = useState('');
+  const [unitCode, setUnitCode] = useState('');
+  const [yearLevel, setYearLevel] = useState('1');
+  const [directUrl, setDirectUrl] = useState('');
+  const [category, setCategory] = useState('CLINICAL MEDICINE');
+  const [eventDate, setEventDate] = useState('');
+  const [location, setLocation] = useState('');
+  const [content, setContent] = useState('');
 
-  useEffect(() => { fetchItems(); }, [mode]);
-
-  const handleSubmit = async (e) => {
+  const handleUpload = async (e) => {
     e.preventDefault();
     setLoading(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const { error } = await supabase.from(tableMap[mode]).insert([{ ...formData, admin_id: user?.id }]);
-      if (error) throw error;
-      setFormData({});
-      fetchItems();
-      if (onUploadSuccess) onUploadSuccess();
-      alert(`JKUCMA PROTOCOL: ${mode.toUpperCase()} Posted!`);
-    } catch (err) { alert("Sync Error: " + err.message); }
-    setLoading(false);
-  };
+    setMessage({ text: '', type: '' });
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Permanently delete this item from the Hub?")) return;
-    const { error } = await supabase.from(tableMap[mode]).delete().eq('id', id);
-    if (!error) {
-      fetchItems();
-      if (onUploadSuccess) onUploadSuccess();
+    try {
+      if (activeTab === 'papers') {
+        const { error } = await supabase.from('past_papers').insert([{
+          title,
+          unit_code: unitCode,
+          year_level: parseInt(yearLevel),
+          file_url: directUrl,
+          created_at: new Date().toISOString()
+        }]);
+        if (error) throw error;
+      } else if (activeTab === 'library') {
+        const { error } = await supabase.from('clinical_library').insert([{
+          title,
+          category,
+          file_url: directUrl,
+          created_at: new Date().toISOString()
+        }]);
+        if (error) throw error;
+      } else if (activeTab === 'events') {
+        const { error } = await supabase.from('events').insert([{
+          title,
+          date: eventDate,
+          location,
+          details: content,
+          created_at: new Date().toISOString()
+        }]);
+        if (error) throw error;
+      } else if (activeTab === 'feed') {
+        const { error } = await supabase.from('announcements').insert([{
+          title,
+          content,
+          created_at: new Date().toISOString()
+        }]);
+        if (error) throw error;
+      }
+
+      setMessage({ text: 'Successfully published to JKUCMA Hub!', type: 'success' });
+      setTimeout(() => {
+        if (onUploadSuccess) onUploadSuccess();
+        onClose();
+      }, 1200);
+    } catch (err) {
+      setMessage({ text: err.message, type: 'error' });
+    } finally {
+      setLoading(false);
     }
   };
 
+  const navOptions = [
+    { id: 'papers', label: 'PAPERS', icon: <FileText size={18} /> },
+    { id: 'library', label: 'LIBRARY', icon: <BookOpen size={18} /> },
+    { id: 'events', label: 'EVENTS', icon: <Calendar size={18} /> },
+    { id: 'feed', label: 'FEED', icon: <MessageSquare size={18} /> }
+  ];
+
   return (
-    <div className="fixed inset-0 bg-[#003366]/80 backdrop-blur-md flex items-center justify-center p-6 z-[100] animate-in fade-in duration-300">
-      <div className="bg-white w-full max-w-lg rounded-[3rem] p-8 relative animate-in zoom-in-95 duration-200 shadow-3xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4">
+      
+      {/* BACKGROUND TAP CLOSE */}
+      <div className="absolute inset-0" onClick={onClose} />
+
+      {/* FULL-HEIGHT MODAL CONTAINER */}
+      <div className="relative w-full max-w-xl bg-white rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl flex flex-col h-[92vh] sm:h-auto sm:max-h-[90vh] overflow-hidden z-10 animate-in slide-in-from-bottom duration-300">
         
-        <button onClick={onClose} className="absolute top-8 right-8 text-slate-300 hover:text-red-500 transition-colors"><X size={24}/></button>
-        
-        <div className="flex items-center gap-3 mb-2">
-          <KeyRound size={20} className="text-[#1a5d1a]" />
-          <h3 className="font-black text-[#003366] text-2xl uppercase tracking-tighter">Admin Vault</h3>
+        {/* HEADER BAR */}
+        <div className="p-6 pb-3 border-b border-slate-100 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2.5">
+            <span className="p-2.5 bg-emerald-100 text-emerald-800 rounded-2xl">
+              <Key size={20} />
+            </span>
+            <div>
+              <h2 className="text-base sm:text-xl font-black text-slate-900 uppercase tracking-tight">Admin Vault</h2>
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Manage Association Ecosystem</p>
+            </div>
+          </div>
+
+          <button 
+            onClick={onClose} 
+            className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-2xl active:scale-90 transition-all"
+          >
+            <X size={18} />
+          </button>
         </div>
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Manage Association Ecosystem</p>
-        
-        {/* 🏥 5-CATEGORY SELECTOR */}
-        <div className="flex flex-wrap gap-2 mb-8 bg-slate-50 p-1.5 rounded-2xl shadow-inner">
-          {[
-            { id: 'paper', icon: <FileText size={14}/>, label: 'Papers' },
-            { id: 'library', icon: <Book size={14}/>, label: 'Library' },
-            { id: 'event', icon: <Calendar size={14}/>, label: 'Events' },
-            { id: 'announcement', icon: <Megaphone size={14}/>, label: 'Feed' },
-            { id: 'link', icon: <LinkIcon size={14}/>, label: 'Links' }
-          ].map((m) => (
-            <button key={m.id} type="button" onClick={() => { setMode(m.id); setFormData({}); }}
-              className={`flex-1 min-w-[80px] flex flex-col items-center py-2.5 rounded-xl transition-all ${mode === m.id ? 'bg-[#003366] text-white shadow-lg' : 'text-slate-400 hover:bg-white'}`}
+
+        {/* TAB SWITCHER */}
+        <div className="px-6 py-3 bg-slate-50 border-b border-slate-100 flex gap-2 overflow-x-auto no-scrollbar shrink-0">
+          {navOptions.map((opt) => (
+            <button
+              key={opt.id}
+              onClick={() => { setActiveTab(opt.id); setMessage({ text: '', type: '' }); }}
+              className={`flex-1 min-w-[75px] py-2.5 px-3 rounded-2xl flex flex-col items-center gap-1 text-[9px] font-black uppercase tracking-wider transition-all ${
+                activeTab === opt.id 
+                  ? 'bg-[#003366] text-white shadow-md' 
+                  : 'bg-white text-slate-500 hover:bg-slate-100 border border-slate-200/60'
+              }`}
             >
-              {m.icon}
-              <span className="text-[8px] font-black uppercase mt-1">{m.label}</span>
+              {opt.icon}
+              <span>{opt.label}</span>
             </button>
           ))}
         </div>
 
-        {/* 🏥 UPLOAD FORM */}
-        <form onSubmit={handleSubmit} className="space-y-4 mb-10 pb-10 border-b border-slate-100">
-          <input 
-            placeholder="Protocol Title / Subject" 
-            className="w-full p-4 bg-slate-50 rounded-2xl border-none text-sm font-bold focus:ring-2 ring-blue-500/10 outline-none"
-            value={formData.title || ''}
-            onChange={(e) => setFormData({...formData, title: e.target.value})} required
-          />
-
-          <div className="grid grid-cols-2 gap-4">
-            {mode === 'paper' && (
-              <>
-                <input placeholder="Unit Code" className="p-4 bg-slate-50 rounded-2xl text-sm font-bold" onChange={(e) => setFormData({...formData, unit_code: e.target.value.toUpperCase()})}/>
-                <select className="p-4 bg-slate-50 rounded-2xl text-sm font-bold" onChange={(e) => setFormData({...formData, year_level: parseInt(e.target.value)})}>
-                  <option>Year Level</option>{[1,2,3,4,5].map(y => <option key={y} value={y}>Yr {y}</option>)}
-                </select>
-              </>
-            )}
-            {mode === 'event' && (
-              <>
-                <input type="date" className="p-4 bg-slate-50 rounded-2xl text-sm font-bold" onChange={(e) => setFormData({...formData, date: e.target.value})}/>
-                <input placeholder="Venue" className="p-4 bg-slate-50 rounded-2xl text-sm font-bold" onChange={(e) => setFormData({...formData, location: e.target.value})}/>
-              </>
-            )}
-          </div>
-
-          {mode !== 'announcement' ? (
-            <input 
-              placeholder="Direct URL (Drive / Survey Link)" 
-              className="w-full p-4 bg-slate-50 rounded-2xl border-none text-sm font-bold"
-              value={formData.file_url || ''}
-              onChange={(e) => setFormData({...formData, file_url: e.target.value})} required
-            />
-          ) : (
-            <textarea placeholder="Announcement content..." className="w-full p-4 bg-slate-50 rounded-2xl text-sm font-bold min-h-[100px]" onChange={(e) => setFormData({...formData, content: e.target.value})} required />
+        {/* SCROLLABLE FORM BODY */}
+        <form onSubmit={handleUpload} className="p-6 space-y-4 overflow-y-auto flex-1 bg-white">
+          {message.text && (
+            <div className={`p-3.5 rounded-2xl text-xs font-bold flex items-center gap-2 ${
+              message.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'
+            }`}>
+              {message.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+              <span>{message.text}</span>
+            </div>
           )}
 
-          <button type="submit" disabled={loading} className="w-full py-5 bg-[#1a5d1a] text-white rounded-3xl font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-3">
-            {loading ? <Loader2 className="animate-spin" /> : "POST TO JKUCMA HUB"}
-          </button>
-        </form>
-
-        {/* 🏥 DELETE/MANAGE SECTION */}
-        <div>
-          <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Existing {mode}s</h4>
-          <div className="space-y-2">
-            {existingItems.map((item) => (
-              <div key={item.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl group hover:bg-red-50 transition-all">
-                <div className="flex flex-col">
-                  <span className="text-xs font-black text-[#003366] uppercase tracking-tighter">{item.title}</span>
-                  <span className="text-[9px] text-slate-400 font-bold">{new Date(item.created_at).toLocaleDateString()}</span>
-                </div>
-                <button onClick={() => handleDelete(item.id)} className="p-2 text-slate-300 hover:text-red-500 transition-colors">
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            ))}
-            {existingItems.length === 0 && <p className="text-[10px] text-slate-300 italic">No items found in this protocol.</p>}
+          <div>
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">Protocol Title / Subject</label>
+            <input 
+              type="text" 
+              required
+              placeholder="e.g. End of Stage Surgery Exam" 
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-600"
+            />
           </div>
-        </div>
+
+          {activeTab === 'papers' && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">Unit Code</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. HCM 2204" 
+                  value={unitCode}
+                  onChange={(e) => setUnitCode(e.target.value)}
+                  className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-600"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">Year Level</label>
+                <select 
+                  value={yearLevel}
+                  onChange={(e) => setYearLevel(e.target.value)}
+                  className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-600"
+                >
+                  <option value="1">Year 1</option>
+                  <option value="2">Year 2</option>
+                  <option value="3">Year 3</option>
+                  <option value="4">Year 4</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'library' && (
+            <div>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">Department Category</label>
+              <select 
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-600"
+              >
+                <option value="CLINICAL MEDICINE">Clinical Medicine</option>
+                <option value="ANATOMY">Anatomy</option>
+                <option value="PHARMACOLOGY">Pharmacology</option>
+                <option value="PATHOLOGY">Pathology</option>
+                <option value="SURGERY">Surgery</option>
+              </select>
+            </div>
+          )}
+
+          {(activeTab === 'papers' || activeTab === 'library') && (
+            <div>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">Direct URL (Drive / PDF Link)</label>
+              <input 
+                type="url" 
+                required
+                placeholder="https://drive.google.com/..." 
+                value={directUrl}
+                onChange={(e) => setDirectUrl(e.target.value)}
+                className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-600"
+              />
+            </div>
+          )}
+
+          {activeTab === 'events' && (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">Event Date</label>
+                  <input 
+                    type="date" 
+                    required
+                    value={eventDate}
+                    onChange={(e) => setEventDate(e.target.value)}
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-600"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">Location</label>
+                  <input 
+                    type="text" 
+                    placeholder="COHES / Online" 
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-600"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">Event Brief</label>
+                <textarea 
+                  rows={3} 
+                  placeholder="Key agenda and venue schedule..."
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-medium outline-none focus:ring-2 focus:ring-emerald-600"
+                />
+              </div>
+            </>
+          )}
+
+          {activeTab === 'feed' && (
+            <div>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">Broadcast Content</label>
+              <textarea 
+                rows={4} 
+                required
+                placeholder="Official message to all active association members..."
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-medium outline-none focus:ring-2 focus:ring-emerald-600"
+              />
+            </div>
+          )}
+
+          <div className="pt-3">
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="w-full py-4 bg-[#1a5d1a] hover:bg-emerald-800 active:scale-95 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl transition-all"
+            >
+              {loading ? "Transmitting..." : "Post to JKUCMA Hub"}
+            </button>
+          </div>
+        </form>
 
       </div>
     </div>
