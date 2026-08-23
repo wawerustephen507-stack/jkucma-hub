@@ -24,6 +24,7 @@ const Dashboard = ({ user, profile }) => {
   const [isLibraryPouchOpen, setIsLibraryPouchOpen] = useState(false);
   const [adverts, setAdverts] = useState([]);
   const [libraryResources, setLibraryResources] = useState([]);
+  const [sessionEmail, setSessionEmail] = useState('');
 
   const [latestAnnouncement, setLatestAnnouncement] = useState({
     title: "JKUCMA Digital Hub",
@@ -31,8 +32,14 @@ const Dashboard = ({ user, profile }) => {
   });
   const [nextEvent, setNextEvent] = useState(null);
 
-  // Super Admin Validation (Evaluates user auth email & profile email case-insensitively)
-  const currentUserEmail = (user?.email || profile?.email || '').toLowerCase().trim();
+  // Direct authentication check with fallbacks
+  const currentUserEmail = (
+    sessionEmail || 
+    user?.email || 
+    profile?.email || 
+    ''
+  ).toLowerCase().trim();
+
   const isSuperAdmin = currentUserEmail === 'wawerustephen507@gmail.com';
 
   const fetchHubData = async () => {
@@ -81,6 +88,13 @@ const Dashboard = ({ user, profile }) => {
   };
 
   useEffect(() => {
+    const getAuthSession = async () => {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser?.email) {
+        setSessionEmail(authUser.email);
+      }
+    };
+    getAuthSession();
     fetchHubData();
   }, []);
 
@@ -167,7 +181,7 @@ const Dashboard = ({ user, profile }) => {
             </div>
           )}
 
-          {/* SUPER ADMIN ADVERT MANAGER */}
+          {/* SUPER ADMIN ONLY ADVERT MANAGER */}
           {isSuperAdmin && (
             <div className="mt-2 pt-2 border-t border-white/10">
               <NavItem 
